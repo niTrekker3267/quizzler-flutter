@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quizzler/questionbank.dart';
 
 void main() => runApp(Quizzler());
 
@@ -28,12 +29,50 @@ class _QuizPageState extends State<QuizPage> {
 
   List<Icon> scoreKeeper = [];
 
-  List<String> questions =[
-    'You can lead a cow down stairs but not up stairs.',
-    'Approximately one quarter of human bones are in the feet.',
-    'A slug\'s blood is green.'
-  ];
-  int questionTracker = 0;
+  QuestionBank questionBank = QuestionBank();
+
+  bool _isButtonDisabled;
+  String _questionText;
+  int _correctAnswer;
+  int _wrongAnswer;
+
+  @override
+  void initState()
+  {
+    super.initState();
+    _isButtonDisabled = false;
+    _questionText = questionBank.nextQuestion;
+    _correctAnswer = 0;
+    _wrongAnswer = 0;
+  }
+
+  void setScore(bool expectedAnswer, bool userAnswer)
+  {
+    setState(() {
+
+      if(expectedAnswer == userAnswer)
+        {
+          scoreKeeper.add(Icon(Icons.check, color: Colors.green,));
+          _correctAnswer++;
+        }
+      else {
+        scoreKeeper.add(Icon(Icons.clear, color: Colors.red,));
+        _wrongAnswer++;
+      }
+
+        //Check if the test is complete
+      if(questionBank.quizComplete)
+        {
+          _isButtonDisabled = true;
+          _questionText = 'You have successfully completed the quiz';
+        }
+      else
+        {
+          _questionText = questionBank.nextQuestion;
+        }
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +86,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                'This is where the question text will go.',
+                _questionText,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -57,53 +96,82 @@ class _QuizPageState extends State<QuizPage> {
             ),
           ),
         ),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.all(15.0),
-            child: FlatButton(
-              textColor: Colors.white,
-              color: Colors.green,
-              child: Text(
-                'True',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20.0,
+        Visibility(
+          visible: !questionBank.quizComplete,
+          child: Expanded(
+            child: Padding(
+              padding: EdgeInsets.all(15.0),
+              child: FlatButton(
+                textColor: Colors.white,
+                color: Colors.green,
+                child: Text(
+                  'True',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20.0,
+                  ),
                 ),
+                onPressed: (){
+                  //check the answer to the question and then move to the next question
+                  setScore(questionBank.checkAnswer, true);
+                  //The user picked true.
+                },
               ),
-              onPressed: () {
-                setState(() {
-                  scoreKeeper.add(
-                    Icon(
-                      Icons.check,
-                      color: Colors.green,
-                    )
-                  );
-                });
-                //The user picked true.
-              },
             ),
           ),
         ),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.all(15.0),
-            child: FlatButton(
-              color: Colors.red,
-              child: Text(
-                'False',
-                style: TextStyle(
-                  fontSize: 20.0,
-                  color: Colors.white,
+        Visibility(
+          visible: !questionBank.quizComplete,
+          child: Expanded(
+            child: Padding(
+              padding: EdgeInsets.all(15.0),
+              child: FlatButton(
+                color: Colors.red,
+                child: Text(
+                  'False',
+                  style: TextStyle(
+                    fontSize: 20.0,
+                    color: Colors.white,
+                  ),
                 ),
+                onPressed: () {
+                  setScore(questionBank.checkAnswer, false);
+                  if(questionBank.quizComplete)
+                  {
+
+                  }
+                },
               ),
-              onPressed: () {
-                //The user picked false.
-              },
             ),
           ),
         ),
-        Row(
-          children: scoreKeeper,
+        Visibility(
+          visible: !questionBank.quizComplete,
+          child: Row(
+            children: scoreKeeper,
+          ),
+        ),
+        Visibility(
+          visible: questionBank.quizComplete,
+          child: Text(
+            'Correct Answers: $_correctAnswer',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 25.0,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        Visibility(
+          visible: questionBank.quizComplete,
+          child: Text(
+            'Wrong Answers: $_wrongAnswer',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 25.0,
+              color: Colors.white,
+            ),
+          ),
         ),
       ],
     );
